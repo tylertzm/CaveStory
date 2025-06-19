@@ -1,6 +1,6 @@
 //Testdatei für Kürteil
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
-import { minimap } from './minimap.js';
+import { minimap } from './minimap.js'; 
 
 let scene, camera, renderer, clock;
 let keys = {};
@@ -116,6 +116,30 @@ createMarker(5, 5, 0x00ff00); // Start (grün)
     // Initialize minimap
     const drawMinimap = minimap(mazeMap, camera.position, startPosition, endPosition);
 
+    // Create message overlay
+        const messageOverlay = document.createElement('div');
+        messageOverlay.style.position = 'absolute';
+        messageOverlay.style.top = '50%';
+        messageOverlay.style.left = '50%';
+        messageOverlay.style.transform = 'translate(-50%, -50%)';
+        messageOverlay.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        messageOverlay.style.color = 'gold';
+        messageOverlay.style.padding = '20px';
+        messageOverlay.style.borderRadius = '10px';
+        messageOverlay.style.fontSize = '24px';
+        messageOverlay.style.fontFamily = 'Arial, sans-serif';
+        messageOverlay.style.display = 'none';
+        messageOverlay.style.zIndex = '1000';
+        messageOverlay.textContent = 'Glückwunsch!';
+        document.body.appendChild(messageOverlay);
+
+        // Add countdown text
+        const countdownText = document.createElement('div');
+        countdownText.style.marginTop = '10px';
+        countdownText.style.fontSize = '18px';
+        countdownText.style.textAlign = 'center';
+        messageOverlay.appendChild(countdownText);
+
     function animate() {
         requestAnimationFrame(animate);
         const delta = clock.getDelta();
@@ -174,8 +198,19 @@ createMarker(5, 5, 0x00ff00); // Start (grün)
             Math.pow(playerX - endPosition.x, 2) + Math.pow(playerZ - endPosition.z, 2)
         );
         if (distanceToEnd < 2) { // Threshold for reaching the end
-            alert('Glückwunsch!');
-            location.reload(); // Restart the game
+            messageOverlay.style.display = 'block';
+            let countdown = 3;
+            countdownText.textContent = `Neustart in ${countdown} Sekunden...`;
+            
+            const timer = setInterval(() => {
+                countdown--;
+                if (countdown > 0) {
+                    countdownText.textContent = `Neustart in ${countdown} Sekunden...`;
+                } else {
+                    clearInterval(timer);
+                    location.reload();
+                }
+            }, 1000);
         }
 
         renderer.render(scene, camera);

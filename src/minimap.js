@@ -1,3 +1,5 @@
+// Wurde importiert in Test.js
+
 export function minimap(mazeMap, playerPosition, startPosition, endPosition) {
     const canvas = document.createElement('canvas');
     canvas.width = 200; // Minimap size
