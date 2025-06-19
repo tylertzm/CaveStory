@@ -1,5 +1,7 @@
 //Testdatei für Kürteil
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+import { minimap } from './minimap.js';
+
 let scene, camera, renderer, clock;
 let keys = {};
 let yaw = 0;
@@ -90,62 +92,96 @@ function init() {
     buildMazeFromMap(mazeMap);
     // Start- und Zielmarker 
 createMarker(5, 5, 0x00ff00); // Start (grün)
-createMarker(50, 45, 0xff0000); // Ziel (rot)
 
-}
+    const startPosition = { x: 5, z: 5 }; // Startposition
 
+    // Find a valid initial end position within non-wall areas
+    let endPosition;
+    const validPositions = [];
 
-
-function animate() {
-    requestAnimationFrame(animate);
-    const delta = clock.getDelta();
-    const speed = 23;
-
-    // Blickrichtung berechnen
-    const direction = new THREE.Vector3();
-    direction.x = Math.sin(yaw) * Math.cos(pitch);
-    direction.y = Math.sin(pitch);
-    direction.z = Math.cos(yaw) * Math.cos(pitch);
-    direction.normalize();
-
-    camera.lookAt(camera.position.clone().add(direction));
-
-    // Bewegung
-    const right = new THREE.Vector3().crossVectors(direction, new THREE.Vector3(0, 1, 0)).normalize();
-    const moveDir = new THREE.Vector3();
-
-    if (keys['w']) moveDir.add(direction);
-    if (keys['s']) moveDir.sub(direction);
-    if (keys['a']) moveDir.sub(right);
-    if (keys['d']) moveDir.add(right);
-
-    moveDir.y = 0; // nicht fliegen
-    moveDir.normalize();
-
-    // --- Collision Detection ---
-    if (moveDir.length() > 0) {
-        const moveStep = moveDir.clone().multiplyScalar(speed * delta);
-        const newPos = camera.position.clone().add(moveStep);
-        // Player bounding box (as a small box around camera)
-        const playerBox = new THREE.Box3().setFromCenterAndSize(
-            new THREE.Vector3(newPos.x, newPos.y, newPos.z),
-            new THREE.Vector3(3, 10, 3) // Adjust size as needed
-        );
-        let collision = false;
-        for (const wallBox of wallBoxes) {
-            if (playerBox.intersectsBox(wallBox)) {
-                collision = true;
-                break;
+    // Collect all non-wall positions
+    for (let row = 0; row < mazeMap.length; row++) {
+        for (let col = 0; col < mazeMap[row].length; col++) {
+            if (mazeMap[row][col] === 0) { // Non-wall area
+                validPositions.push({ x: col * 5, z: row * 5 }); // Scale to world coordinates
             }
         }
-        if (!collision) {
-            camera.position.copy(newPos);
-        }
-        // else: don't move if collision
     }
-    // --- End Collision Detection ---
 
-    renderer.render(scene, camera);
+    // Randomly select one position
+    if (validPositions.length > 0) {
+        endPosition = validPositions[Math.floor(Math.random() * validPositions.length)];
+    }
+
+    // Initialize minimap
+    const drawMinimap = minimap(mazeMap, camera.position, startPosition, endPosition);
+
+    function animate() {
+        requestAnimationFrame(animate);
+        const delta = clock.getDelta();
+        const speed = 23;
+
+        // Blickrichtung berechnen
+        const direction = new THREE.Vector3();
+        direction.x = Math.sin(yaw) * Math.cos(pitch);
+        direction.y = Math.sin(pitch);
+        direction.z = Math.cos(yaw) * Math.cos(pitch);
+        direction.normalize();
+
+        camera.lookAt(camera.position.clone().add(direction));
+
+        // Bewegung
+        const right = new THREE.Vector3().crossVectors(direction, new THREE.Vector3(0, 1, 0)).normalize();
+        const moveDir = new THREE.Vector3();
+
+        if (keys['w']) moveDir.add(direction);
+        if (keys['s']) moveDir.sub(direction);
+        if (keys['a']) moveDir.sub(right);
+        if (keys['d']) moveDir.add(right);
+
+        moveDir.y = 0; // nicht fliegen
+        moveDir.normalize();
+
+        // --- Collision Detection ---
+        if (moveDir.length() > 0) {
+            const moveStep = moveDir.clone().multiplyScalar(speed * delta);
+            const newPos = camera.position.clone().add(moveStep);
+            // Player bounding box (as a small box around camera)
+            const playerBox = new THREE.Box3().setFromCenterAndSize(
+                new THREE.Vector3(newPos.x, newPos.y, newPos.z),
+                new THREE.Vector3(3, 10, 3) // Adjust size as needed
+            );
+            let collision = false;
+            for (const wallBox of wallBoxes) {
+                if (playerBox.intersectsBox(wallBox)) {
+                    collision = true;
+                    break;
+                }
+            }
+            if (!collision) {
+                camera.position.copy(newPos);
+            }
+            // else: don't move if collision
+        }
+        // --- End Collision Detection ---
+
+        drawMinimap(); // Update minimap
+
+        // Check if player reached the end position
+        const playerX = camera.position.x;
+        const playerZ = camera.position.z;
+        const distanceToEnd = Math.sqrt(
+            Math.pow(playerX - endPosition.x, 2) + Math.pow(playerZ - endPosition.z, 2)
+        );
+        if (distanceToEnd < 2) { // Threshold for reaching the end
+            alert('Glückwunsch!');
+            location.reload(); // Restart the game
+        }
+
+        renderer.render(scene, camera);
+    }
+
+    animate();
 }
 
 function onMouseMove(event) {
