@@ -122,7 +122,28 @@ function animate() {
     moveDir.y = 0; // nicht fliegen
     moveDir.normalize();
 
-    camera.position.add(moveDir.multiplyScalar(speed * delta));
+    // --- Collision Detection ---
+    if (moveDir.length() > 0) {
+        const moveStep = moveDir.clone().multiplyScalar(speed * delta);
+        const newPos = camera.position.clone().add(moveStep);
+        // Player bounding box (as a small box around camera)
+        const playerBox = new THREE.Box3().setFromCenterAndSize(
+            new THREE.Vector3(newPos.x, newPos.y, newPos.z),
+            new THREE.Vector3(3, 10, 3) // Adjust size as needed
+        );
+        let collision = false;
+        for (const wallBox of wallBoxes) {
+            if (playerBox.intersectsBox(wallBox)) {
+                collision = true;
+                break;
+            }
+        }
+        if (!collision) {
+            camera.position.copy(newPos);
+        }
+        // else: don't move if collision
+    }
+    // --- End Collision Detection ---
 
     renderer.render(scene, camera);
 }
