@@ -1,2 +1,0 @@
-# CaveStory
-A threejs game 
