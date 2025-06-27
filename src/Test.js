@@ -143,7 +143,22 @@ function animate() {
     moveDir.y = 0; // nicht fliegen
     moveDir.normalize();
 
-    camera.position.add(moveDir.multiplyScalar(speed * delta));
+    // Collision detection
+    const nextPosition = camera.position.clone().add(moveDir.clone().multiplyScalar(speed * delta));
+    let collision = false;
+    const playerBox = new THREE.Box3().setFromCenterAndSize(
+        new THREE.Vector3(nextPosition.x, 9, nextPosition.z), // y = half wall height
+        new THREE.Vector3(3, 18, 3) // player size (width, height, depth)
+    );
+    for (const box of wallBoxes) {
+        if (box.intersectsBox(playerBox)) {
+            collision = true;
+            break;
+        }
+    }
+    if (!collision) {
+        camera.position.copy(nextPosition);
+    }
 
     // Render minimap
     if (typeof drawMinimap === 'function') {
