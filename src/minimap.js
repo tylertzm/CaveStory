@@ -9,13 +9,15 @@ export function minimap(mazeMap, playerPosition, startPosition, endPosition) {
     canvas.style.right = '20px';
     canvas.style.border = '2px solid white';
     canvas.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+    canvas.style.pointerEvents = 'none'; // Do not block mouse/keyboard
+    canvas.style.zIndex = '100';
     document.body.appendChild(canvas);
 
     const ctx = canvas.getContext('2d');
 
     const cellSize = canvas.width / mazeMap[0].length; // Scale maze to fit canvas
 
-    return function drawMinimap() {
+    function drawMinimap() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         // Draw maze layout
@@ -51,5 +53,6 @@ export function minimap(mazeMap, playerPosition, startPosition, endPosition) {
         ctx.beginPath();
         ctx.arc(playerX * cellSize, playerZ * cellSize, cellSize / 4, 0, Math.PI * 2);
         ctx.fill();
-    };
+    }
+    return drawMinimap;
 }

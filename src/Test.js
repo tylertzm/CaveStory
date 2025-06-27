@@ -8,6 +8,7 @@ let yaw = 0;
 let wallBoxes = []; // Kollision
 let pitch = 0;
 let hemiLight, dirLight;
+let drawMinimap;
 
 const textureLoader = new THREE.TextureLoader();
 const wallTexture = textureLoader.load('stone.jpg');
@@ -109,12 +110,12 @@ function init() {
     ];
     buildMazeFromMap(mazeMap);
     // Start- und Zielmarker 
-createMarker(5, 5, 0x00ff00); // Start (grün)
-createMarker(50, 45, 0xff0000); // Ziel (rot)
+    createMarker(5, 5, 0x00ff00); // Start (grün)
+    createMarker(50, 45, 0xff0000); // Ziel (rot)
 
+    // Initialize minimap
+    drawMinimap = minimap(mazeMap, camera.position, {x:5, z:5}, {x:50, z:45});
 }
-
-
 
 function animate() {
     requestAnimationFrame(animate);
@@ -144,11 +145,16 @@ function animate() {
 
     camera.position.add(moveDir.multiplyScalar(speed * delta));
 
+    // Render minimap
+    if (typeof drawMinimap === 'function') {
+        drawMinimap();
+    }
+
         renderer.render(scene, camera);
     }
 
     animate();
-}
+
 
 function onMouseMove(event) {
     const sensitivity = 0.002;
