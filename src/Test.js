@@ -5,6 +5,20 @@ let keys = {};
 let yaw = 0;
 let wallBoxes = []; // Kollision
 let pitch = 0;
+let hemiLight, dirLight;
+
+const textureLoader = new THREE.TextureLoader();
+const wallTexture = textureLoader.load('stone.jpg');
+wallTexture.wrapS = THREE.RepeatWrapping;
+wallTexture.wrapT = THREE.RepeatWrapping;
+const floorTexture = textureLoader.load('steinpflaster.jpg')
+floorTexture.wrapS = THREE.RepeatWrapping;
+floorTexture.wrapT = THREE.RepeatWrapping;
+floorTexture.repeat.set(20, 20); // Kachelt die Textur 50x auf X- und Y-Achse
+
+window.hemiLight = hemiLight;
+window.dirLight = dirLight;
+
 
 init();
 animate();
@@ -16,7 +30,7 @@ function buildMazeFromMap(map) {
             if (map[row][col] === 1) {
                 const x = col * size;
                 const z = row * size;
-                createWall(x, z, size, 10, size); // Höhe 10
+                createWall(x, z, size, 18, size); // Höhe 10
             }
         }
     }
@@ -32,7 +46,8 @@ function createMarker(x, z, color = 0x00ff00) {
 
 function init() {
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x222222);
+    const skyTexture = textureLoader.load('night-sky.jpg'); // dein Himmelbild
+    scene.background = skyTexture;
 
     camera = new THREE.PerspectiveCamera(60,window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.set(5, 5, 5); // nah am Boden
@@ -43,17 +58,20 @@ function init() {
 
     clock = new THREE.Clock();
 
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444);
+    hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 1);
     hemiLight.position.set(0, 20, 0);
     scene.add(hemiLight);
+    window.hemiLight = hemiLight;
 
-    const dirLight =  new THREE.DirectionalLight(0xffffff);
+    dirLight = new THREE.DirectionalLight(0xffffff, 1);
     dirLight.position.set(5, 10, 7.5);
     scene.add(dirLight);
+    window.dirLight = dirLight;
+
 
     const floor = new THREE.Mesh(
         new THREE.PlaneGeometry(200, 200),
-        new THREE.MeshStandardMaterial({color: 0x333333})
+        new THREE.MeshStandardMaterial({ map: floorTexture})
     );
     floor.rotation.x = -Math.PI / 2;
     scene.add(floor);
@@ -93,9 +111,6 @@ createMarker(5, 5, 0x00ff00); // Start (grün)
 createMarker(50, 45, 0xff0000); // Ziel (rot)
 
 }
-
-
-
 function animate() {
     requestAnimationFrame(animate);
     const delta = clock.getDelta();
@@ -119,10 +134,28 @@ function animate() {
     if (keys['a']) moveDir.sub(right);
     if (keys['d']) moveDir.add(right);
 
-    moveDir.y = 0; // nicht fliegen
+    moveDir.y = 0; 
     moveDir.normalize();
 
-    camera.position.add(moveDir.multiplyScalar(speed * delta));
+    const moveStep = moveDir.clone().multiplyScalar(speed * delta);
+const newPos = camera.position.clone().add(moveStep);
+
+const playerBox = new THREE.Box3().setFromCenterAndSize(
+    new THREE.Vector3(newPos.x, newPos.y, newPos.z),
+    new THREE.Vector3(1, 6, 1) 
+);
+
+let collides = false;
+for (const wallBox of wallBoxes) {
+    if (playerBox.intersectsBox(wallBox)) {
+        collides = true;
+        break;
+    }
+}
+
+if (!collides) {
+    camera.position.copy(newPos);
+}
 
     renderer.render(scene, camera);
 }
@@ -135,13 +168,13 @@ function onMouseMove(event) {
 }
 function createWall(x, z, width = 23, height = 25, depth = 5) {
     const wallGeo = new THREE.BoxGeometry(width, height, depth);
-    const wallMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
+    const wallMat = new THREE.MeshStandardMaterial({ map: wallTexture });
     const wall = new THREE.Mesh(wallGeo, wallMat);
     wall.position.set(x, height / 2, z);
     scene.add(wall);
+    
     const box = new THREE.Box3().setFromObject(wall);
     wallBoxes.push(box);
 
     return wall;
 }
-
