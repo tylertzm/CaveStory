@@ -2,6 +2,7 @@
 
 export function minimap(mazeMap, playerPosition, startPosition, endPosition) {
     const canvas = document.createElement('canvas');
+    canvas.id = 'minimapCanvas';
     canvas.width = 200; // Minimap size
     canvas.height = 200;
     canvas.style.position = 'absolute';

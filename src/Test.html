@@ -130,10 +130,11 @@
       z-index: 9999;">
     <h1> Level beendet</h1>
     <button onclick="goToMenu()" style="margin: 10px; padding: 10px 20px;">Hauptmenü</button>
-    <button onclick="nextLevel()" style="margin:10px; padding: 10px 20px;" disabled> Nächstes Level</button>  
+    <button onclick="nextLevel()" style="margin:10px; padding: 10px 20px;"> Nächstes Level</button>  
     </div>
 
   <button id="pauseButton">Pause</button>
+ 
 
   <script type="module" src="Test.js"></script>
   <script>
@@ -215,6 +216,22 @@
 
     // Spiel pausieren (Flag-Variante für spiel.js)
     window.isGamePaused = () => gamePaused;
+
+    function nextLevel() {
+      console.log("Nächstes Level wird geladen..");
+      document.getElementById("levelCompleteScreen").style.display = "none";
+      pauseButton.style.display = "block";
+      document.body.requestPointerLock();
+
+      if (window.loadNextLevel) {
+        window.loadNextLevel();
+      }
+    }
+    function goToMenu() {
+      document.getElementById("levelCompleteScreen").style.display = "none";
+      pauseButton.style.display = "none";
+      startScreen.style.display = "flex"
+    }
   </script>
 </body>
 </html>
