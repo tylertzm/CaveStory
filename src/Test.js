@@ -1,6 +1,5 @@
-// Optimierter kompletter Code
-
-// Add background music audio element to the DOM on page load
+// bg music https://pixabay.com/music/mystery-dark-ambient-cave-experience-224286/
+// mario sound https://themushroomkingdom.net/media/smb/wav
 window.addEventListener('DOMContentLoaded', () => {
     let music = document.getElementById('bgMusic');
     if (!music) {
