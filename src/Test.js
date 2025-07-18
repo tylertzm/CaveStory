@@ -1,4 +1,28 @@
 // Optimierter kompletter Code
+
+// Add background music audio element to the DOM on page load
+window.addEventListener('DOMContentLoaded', () => {
+    let music = document.getElementById('bgMusic');
+    if (!music) {
+        music = document.createElement('audio');
+        music.id = 'bgMusic';
+        music.src = 'cave.mp3';
+        music.loop = true;
+        music.volume = 0.5;
+        music.style.display = 'none';
+        document.body.appendChild(music);
+    }
+    // Try to play immediately (may be blocked by browser)
+    music.play().catch(() => {});
+    // Play on first user interaction if blocked
+    const unlock = () => {
+        music.play().catch(() => {});
+        window.removeEventListener('click', unlock);
+        window.removeEventListener('keydown', unlock);
+    };
+    window.addEventListener('click', unlock);
+    window.addEventListener('keydown', unlock);
+});
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { minimap } from './minimap.js';
 
