@@ -274,8 +274,12 @@ function animate() {
         if (dist < 2) {
             scene.remove(coin);
             coins.splice(i, 1);
+            const coinSound = new Audio('coin.wav');
+            coinSound.volume = 0.7;
+            coinSound.play().catch(() => {});
             collected++;
             updateCoinCounter();
+            // Play coin sound
         }
     }
 
